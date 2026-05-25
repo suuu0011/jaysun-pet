@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<title>쓰다듬기</title>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    body {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: none;
+        font-family: sans-serif;
+        position: relative;
+    }
+
+    #container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 4vh 2vw 0;
+    }
+
+    #characters {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 2vw;
+    }
+
+    .character {
+        position: relative;
+        width: 46vw;
+        max-width: 420px;
+        min-width: 160px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .character:first-child {
+        transform: translateX(130px) translateY(0px);
+    }
+
+    .character:last-child {
+        transform: translateX(-90px) translateY(20px);
+    }
+
+    .ike {
+        width: 100%;
+        height: auto;
+        display: block;
+        pointer-events: none;
+        will-change: transform;
+        z-index: 2;
+    }
+
+    .head {
+        position: absolute;
+        width: 70%;
+        height: 35%;
+        top: 8%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
+    }
+
+    .bubble {
+        position: absolute;
+        top: -4%;
+        left: 50%;
+        transform: translateX(-50%) translateY(0);
+        background: white;
+        padding: 14px 24px;
+        border-radius: 24px;
+        font-size: clamp(16px, 2vw, 24px);
+        font-weight: bold;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+        opacity: 0;
+        transition: 0.2s ease-out;
+        pointer-events: none;
+        z-index: 20;
+        white-space: nowrap;
+        border: 2px solid #eee;
+    }
+
+    .bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 15px 12px 0;
+        border-style: solid;
+        border-color: white transparent transparent;
+        width: 0;
+        z-index: 2;
+    }
+
+    .bubble::before {
+        content: '';
+        position: absolute;
+        bottom: -18px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 17px 14px 0;
+        border-style: solid;
+        border-color: #eee transparent transparent;
+        width: 0;
+        z-index: 1;
+    }
+
+    .bubble.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+    #hand {
+        position: fixed;
+        width: 45vw;
+        max-width: 350px;
+        left: -500px;
+        top: -500px;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+    }
+
+    .heart {
+        position: fixed;
+        font-size: 42px;
+        pointer-events: none;
+        animation: heartFloat 0.8s ease-out forwards;
+        z-index: 999;
+    }
+
+    @keyframes heartFloat {
+        from {
+            opacity: 1;
+            transform: translateY(0) scale(0.8);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-160px) scale(1.4);
+        }
+    }
+
+    @media (max-width: 768px) {
+        #characters {
+            gap: 1vw;
+        }
+
+        .character {
+            width: 48vw;
+        }
+
+        .bubble {
+            padding: 10px 16px;
+        }
+
+        #hand {
+            width: 42vw;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div id="container">
+    <div id="characters">
+        <div class="character" data-name="left">
+            <div class="bubble">......</div>
+            <div class="head"></div>
+            <img src="./제이.png" class="ike">
+        </div>
+
+        <div class="character" data-name="right">
+            <div class="bubble">......</div>
+            <div class="head"></div>
+            <img src="./선우.png" class="ike">
+        </div>
+    </div>
+</div>
+
+<img src="./손.png" id="hand">
+
+<script>
+    const hand = document.getElementById('hand');
+    const characters = Array.from(document.querySelectorAll('.character'));
+
+    const leftTexts = ['서누야~', '(콕 콕.)'];
+    const rightTexts = ['제이형~', '아 왜요오'];
+
+    const specialReplies = [
+        {
+            from: 'left',
+            triggerText: '서누야~',
+            to: 'right',
+            replyText: '제이형~'
+        },
+        {
+            from: 'left',
+            triggerText: '(콕 콕.)',
+            to: 'right',
+            replyText: '아 왜요오'
+        }
+        
+    ];
+
+    let lastSpeech = {
+        side: null,
+        text: null,
+        time: 0
+    };
+
+    const states = characters.map((character, index) => ({
+        side: index === 0 ? 'left' : 'right',
+        character,
+        ike: character.querySelector('.ike'),
+        head: character.querySelector('.head'),
+        bubble: character.querySelector('.bubble'),
+        texts: index === 0 ? leftTexts : rightTexts,
+        isAnimating: false,
+        lastBubbleTime: 0,
+        bubbleTimer: null
+    }));
+
+    function performAction(x, y) {
+        hand.style.left = x + 'px';
+        hand.style.top = y + 'px';
+
+        states.forEach((state) => {
+            const rect = state.head.getBoundingClientRect();
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                triggerPetting(state, x, y);
+            }
+        });
+    }
+
+    function triggerPetting(state, x, y) {
+        if (state.isAnimating) return;
+
+        state.isAnimating = true;
+
+        state.ike.animate(
+            [
+                { transform: 'scaleY(1) translateY(0)' },
+                { transform: 'scaleY(0.96) translateY(12px)' },
+                { transform: 'scaleY(1) translateY(0)' }
+            ],
+            {
+                duration: 250,
+                easing: 'ease-in-out'
+            }
+        ).onfinish = () => {
+            state.isAnimating = false;
+        };
+
+        createHeart(x, y);
+        showBubble(state);
+    }
+
+    function getSpecialReply(state) {
+        const matchedRule = specialReplies.find((rule) => {
+            return (
+                rule.to === state.side &&
+                rule.from === lastSpeech.side &&
+                rule.triggerText === lastSpeech.text
+            );
+        });
+
+        if (!matchedRule) return null;
+
+        return matchedRule.replyText;
+    }
+
+    function showBubble(state) {
+        const now = Date.now();
+
+        if (now - state.lastBubbleTime <= 1800) return;
+
+        const specialReply = getSpecialReply(state);
+        const text = specialReply || state.texts[Math.floor(Math.random() * state.texts.length)];
+
+        state.bubble.innerText = text;
+        state.bubble.classList.add('show');
+        state.lastBubbleTime = now;
+
+        lastSpeech = {
+            side: state.side,
+            text,
+            time: now
+        };
+
+        clearTimeout(state.bubbleTimer);
+        state.bubbleTimer = setTimeout(() => {
+            state.bubble.classList.remove('show');
+        }, 1200);
+    }
+
+    function createHeart(x, y) {
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        const hearts = ['♡', '♥', '❤'];
+        heart.innerText = hearts[Math.floor(Math.random() * hearts.length)];
+        heart.style.left = x + (Math.random() * 60 - 30) + 'px';
+        heart.style.top = y + 'px';
+        document.body.appendChild(heart);
+
+        setTimeout(() => {
+            heart.remove();
+        }, 800);
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        hand.style.opacity = '1';
+        performAction(e.clientX, e.clientY);
+        const rotate = e.movementX * 0.4;
+        hand.style.transform = `translate(-50%, -50%) rotate(${rotate}deg)`;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            hand.style.opacity = '1';
+            performAction(touch.clientX, touch.clientY);
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            hand.style.opacity = '1';
+            performAction(touch.clientX, touch.clientY);
+        }
+    });
+
+    window.addEventListener('touchend', () => {
+        hand.style.opacity = '0';
+    });
+</script>
+
+</body>
+</html>
