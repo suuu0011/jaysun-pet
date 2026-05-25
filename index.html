@@ -57,11 +57,11 @@
     }
 
     .character:first-child {
-        transform: translateX(40px) translateY(0);
+        transform: translateX(20px) translateY(0);
     }
 
     .character:last-child {
-        transform: translateX(-40px) translateY(12px);
+        transform: translateX(-20px) translateY(12px);
     }
 
     .ike {
@@ -237,21 +237,21 @@
     const hand = document.getElementById('hand');
     const characters = Array.from(document.querySelectorAll('.character'));
 
-    const leftTexts = ['아 뭐하는데!!', '선우야~', '고무땨!', '모찌모찌기모찌찌.'];
-    const rightTexts = ['왜 만지는데~', '제이형~', '하지마아', '좋은데...?'];
+    const leftTexts = ['서누야~', '(콕 콕.)'];
+    const rightTexts = ['제이형~', '아 왜요오'];
 
     const specialReplies = [
         {
             from: 'left',
-            triggerText: '선우야~',
+            triggerText: '서누야~',
             to: 'right',
             replyText: '제이형~'
         },
         {
             from: 'right',
-            triggerText: '제이형~',
+            triggerText: '(콕 콕.)',
             to: 'left',
-            replyText: '왜애~'
+            replyText: '아 왜요오'
         }
     ];
 
