@@ -44,25 +44,24 @@
         display: flex;
         justify-content: center;
         align-items: flex-end;
-        gap: 2vw;
+        gap: clamp(8px, 2vw, 24px);
     }
 
     .character {
         position: relative;
-        width: 46vw;
-        max-width: 420px;
-        min-width: 160px;
+        width: min(42vw, 420px);
+        min-width: 140px;
         display: flex;
         justify-content: center;
         align-items: center;
     }
 
     .character:first-child {
-        transform: translateX(130px) translateY(0px);
+        transform: translateX(40px) translateY(0);
     }
 
     .character:last-child {
-        transform: translateX(-90px) translateY(20px);
+        transform: translateX(-40px) translateY(12px);
     }
 
     .ike {
@@ -166,20 +165,49 @@
     }
 
     @media (max-width: 768px) {
+        #container {
+            padding: 2vh 1vw 0;
+        }
+
         #characters {
-            gap: 1vw;
+            gap: 0;
+            align-items: flex-end;
         }
 
         .character {
             width: 48vw;
+            min-width: 0;
+        }
+
+        .character:first-child {
+            transform: translateX(18px) translateY(0);
+        }
+
+        .character:last-child {
+            transform: translateX(-18px) translateY(8px);
         }
 
         .bubble {
-            padding: 10px 16px;
+            top: -8%;
+            padding: 10px 14px;
+            font-size: clamp(12px, 3.2vw, 18px);
+        }
+
+        .character:first-child .bubble {
+            left: 52%;
+        }
+
+        .character:last-child .bubble {
+            left: 48%;
         }
 
         #hand {
-            width: 42vw;
+            width: 38vw;
+            max-width: 220px;
+        }
+
+        .heart {
+            font-size: 34px;
         }
     }
 </style>
@@ -209,23 +237,22 @@
     const hand = document.getElementById('hand');
     const characters = Array.from(document.querySelectorAll('.character'));
 
-    const leftTexts = ['서누야~', '(콕 콕.)'];
-    const rightTexts = ['제이형~', '아 왜요오'];
+    const leftTexts = ['아 뭐하는데!!', '선우야~', '고무땨!', '모찌모찌기모찌찌.'];
+    const rightTexts = ['왜 만지는데~', '제이형~', '하지마아', '좋은데...?'];
 
     const specialReplies = [
         {
             from: 'left',
-            triggerText: '서누야~',
+            triggerText: '선우야~',
             to: 'right',
             replyText: '제이형~'
         },
         {
-            from: 'left',
-            triggerText: '(콕 콕.)',
-            to: 'right',
-            replyText: '아 왜요오'
+            from: 'right',
+            triggerText: '제이형~',
+            to: 'left',
+            replyText: '왜애~'
         }
-        
     ];
 
     let lastSpeech = {
@@ -291,7 +318,6 @@
         });
 
         if (!matchedRule) return null;
-
         return matchedRule.replyText;
     }
 
